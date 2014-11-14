@@ -1,0 +1,37 @@
+﻿.grid {
+    width:450px;
+    border:2px solid #000000;
+}
+
+.grid td {
+    width:50px;
+    height:50px;
+}
+
+.seperator {
+    border-bottom:2px solid #000000;
+}
+
+.cell-seperator {
+    border-right:2px solid #000000;
+}
+
+.invisibletb {
+    border: none;
+    width: 100%;
+    height: 100%;
+}
+
+.highlight-column,
+.highlight-row,
+.highlight-grid {
+    background-color:#4cff00;
+}
+
+body .navbar {
+    border-radius: initial;
+}
+
+.btn-group-gutter {
+    padding-top:20px;
+}

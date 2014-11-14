@@ -1,0 +1,357 @@
+﻿@{
+    ViewBag.Title = "Home";
+}
+
+@functions {
+    public string GetRowClass(int y)
+    {
+       if (y % 3==0) 
+       { 
+           return "class=seperator";
+       }
+       return string.Empty;
+    }
+
+    public string GetCellClass(int x)
+    {
+        if (x % 3 == 0)
+        {
+            return "class=cell-seperator";
+        }
+        return string.Empty;
+    }
+
+    public int CellIndex(int x, int y)
+    {
+        return (9 * (y - 1)) + x;
+    }
+
+    public decimal GridIndex(decimal x, decimal y)
+    {
+        var gridX = Math.Ceiling(x / 3);
+        var gridY = Math.Ceiling(y / 3);
+        return (3 * (gridY - 1)) + gridX;
+    }
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <table class="grid" border="1">
+            @for (int y = 1; y < 10; y++)
+            {
+                <tr @GetRowClass(y)>
+                    @for (int x = 1; x < 10; x++)
+                    {
+                        <td @GetCellClass(x)>
+                            <input type="text" class="invisibletb" x-coord="@x" y-coord="@y" index="@CellIndex(x, y)" grid-index="@GridIndex(x, y)" maxlength="1" autocomplete="off" prepopulated="true" />
+                        </td>
+                    }
+                </tr>
+            }
+        </table>
+    </div>
+    <div class="col-md-6">
+        @if (ViewBag.RunTests) 
+        { 
+            <ul id="output" class="list-unstyled">
+
+            </ul>
+        }
+    </div>
+</div>
+<div class="row btn-group-gutter">
+    <div class="col-md-6">
+        <button class="btn btn-success" onclick="checkSolution()">Check</button>
+        <button class="btn btn-warning" onclick="resetSolution()">Reset</button>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+    function getRowByY(y)
+    {
+        return $("[y-coord='" + y + "']");
+    }
+
+    function getColumnByX(x) {
+        return $("[x-coord='" + x + "']");
+    }
+
+    function getGrid(gridIndex) {
+        return $("[grid-index='" + gridIndex + "']");
+    }
+
+    function checkSolutionCalculation()
+    {
+        for (i = 1; i < 10; i++) {
+            var numbers = [];
+            getRowByY(i).each(function () {
+                if (this.value != "")
+                    numbers.push(parseInt(this.value));
+            });
+
+            if (hasDuplicates(numbers))
+                throw "duplicates in row " + i;
+
+            if (totalTooHigh(numbers))
+                throw "total of row " + i + " too high";
+
+            numbers = [];
+            getColumnByX(i).each(function () {
+                if (this.value != "")
+                    numbers.push(parseInt(this.value));
+            });
+
+            if (hasDuplicates(numbers))
+                throw "duplicates in column " + i;
+
+            if (totalTooHigh(numbers))
+                throw "total of column " + i + " too high";
+
+            numbers = [];
+            getGrid(i).each(function () {
+                if (this.value != "")
+                    numbers.push(parseInt(this.value));
+            });
+
+            if (hasDuplicates(numbers))
+                throw "duplicates in grid " + i;
+
+            if (totalTooHigh(numbers))
+                throw "total of grid " + i + " too high";
+        }
+    }
+
+    function checkSolution() {
+        try{
+            checkSolutionCalculation();
+            alert("pass");
+        }
+        catch (err)
+        {
+            alert(err);
+        }
+    }
+
+    function resetSolution() {
+        $(".grid input[prepopulated!=true]").val("");
+    }
+
+    function hasDuplicates(numbers)
+    {
+        return _.uniq(numbers).length < numbers.length;
+    }
+
+    function totalTooHigh(numbers) {
+        return _.sum(numbers) > 45;
+    }
+
+    function getNumber(x, y, gridIndex) {
+        var oneToNine = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+        var numbersTaken = [];
+        getGrid(gridIndex).each(function () {
+            if (this.value != "")
+                numbersTaken.push(parseInt(this.value));
+        });
+        getRowByY(y).each(function () {
+            if (this.value != "")
+                numbersTaken.push(parseInt(this.value));
+        });
+        getColumnByX(x).each(function () {
+            if (this.value != "")
+                numbersTaken.push(parseInt(this.value));
+        });
+        var available = _.difference(oneToNine, _.uniq(numbersTaken));
+        if (available.length == 0) {
+            writeErrorToOutput("no number available");
+            return 0;
+        }
+        return available[Math.floor(Math.random() * available.length)];
+    }
+
+    function getAllNumbers(x, y, gridIndex) {
+        var oneToNine = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+        var numbersTaken = [];
+        getGrid(gridIndex).each(function () {
+            if (this.value != "")
+                numbersTaken.push(parseInt(this.value));
+        });
+        getRowByY(y).each(function () {
+            if (this.value != "")
+                numbersTaken.push(parseInt(this.value));
+        });
+        getColumnByX(x).each(function () {
+            if (this.value != "")
+                numbersTaken.push(parseInt(this.value));
+        });
+        return _.difference(oneToNine, _.uniq(numbersTaken));
+    }
+
+    var difficulty = "@ViewBag.Difficulty";
+
+    $(document).ready(function () {
+        populateGrid(1);
+        for (var i = 2; i <= 9; i++) { populateIntersectingGrid(i); }
+        var checkIfWorks = true;
+        while (checkIfWorks)
+        {
+            try {
+                $(".grid input").each(function () {
+                    if (this.value == "")
+                        throw "input empty";
+                });
+                checkSolutionCalculation();
+                checkIfWorks = false;
+            } catch (err)
+            {
+                $(".grid input").val("");
+                populateGrid(1);
+                for (var i = 2; i <= 9; i++) { populateIntersectingGrid(i); }
+                checkIfWorks = true;
+            }
+        }
+
+        createPuzzleUsingDifficulty();
+
+        $(".grid input").keydown(function (e) {
+            if ($(this).attr("prepopulated") == "true")
+                e.preventDefault();
+            else if (!(e.which == 8 || (e.which > 48 && e.which < 58))) {
+                e.preventDefault();
+            }
+        });
+    });
+
+    function populateGrid(gridIndex)
+    {
+        var gridElements = $("[grid-index='" + gridIndex + "']");
+        for (var i = 0, n = gridElements.length; i < n;i++)
+        {
+            var cell = $(gridElements[i]);
+            var x = cell.attr("x-coord"), y = cell.attr("y-coord");
+            var number = getNumber(x, y, gridIndex);
+            if (number) {
+                cell.val(number);
+            }
+        }
+    }
+
+    function populateIntersectingGrid(gridIndex) {
+        var possibleNumbers = [];
+        var gridElements = $("[grid-index='" + gridIndex + "']");
+        gridElements.each(function () {
+            var cell = $(this);
+            var x = cell.attr("x-coord"), y = cell.attr("y-coord");
+            possibleNumbers.push(getAllNumbers(x, y, gridIndex));
+        });
+        recurseTryPopulate(0, gridElements, possibleNumbers);
+    }
+
+    function recurseTryPopulate(startIndex, gridElements, possibleNumbers)
+    {
+        var alreadyChosenNumbers = [];
+        for (var i = startIndex, count = 0; count < gridElements.length; i = incrementI(i, gridElements.length), count++) {
+            var cell = $(gridElements[i]), pN;
+            for (var j = possibleNumbers[i].length - 1, n = 0; j >= n; j--) {
+                pN = possibleNumbers[i][j];
+                if (alreadyChosenNumbers.indexOf(pN) == -1)
+                    j = -1;
+                else
+                    pN = undefined;
+            }
+            alreadyChosenNumbers.push(pN);
+            cell.val(pN);
+        }
+        if (gridHasEmptyCells(gridElements)) {
+            gridElements.val("");
+            startIndex++;
+            if(startIndex < 9)
+                recurseTryPopulate(startIndex, gridElements, possibleNumbers);
+        }
+    }
+
+    function incrementI(i, n)
+    {
+        if(i < 8)
+            return i + 1;
+        return 0;
+    }
+
+    function gridHasEmptyCells(gridElements)
+    {
+        return $.grep(gridElements, function (x) { return x.value == ""; }).length > 0;
+    }
+
+    function createPuzzleUsingDifficulty()
+    {
+        var alreadyFilledCells = [];
+        var remaining = 81 - difficulty;
+        for (i = 1; i <= remaining; i++) {
+            var randomCellIndex = Math.ceil(Math.random() * 81);
+            while (alreadyFilledCells.indexOf(randomCellIndex) > -1) {
+                randomCellIndex = Math.ceil(Math.random() * 81);
+            }
+            alreadyFilledCells.push(randomCellIndex);
+            var cell = $("[index='" + randomCellIndex + "']");
+            cell.val("");
+            cell.attr("prepopulated", false);
+        }
+        return alreadyFilledCells.length;
+    }
+
+    function writeToOutput(message)
+    {
+        $("#output").append("<li class='text-success'>" + message + "</li>");
+    }
+
+    function writeErrorToOutput(message) {
+        $("#output").append("<li class='text-danger'>" + message + "</li>");
+    }
+</script>
+
+@if (ViewBag.RunTests) 
+{ 
+    <script src="~/Scripts/qunit-1.14.0.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            test("difficulty selected", function () {
+                ok(difficulty == "24" || difficulty == "30" || difficulty == "36");
+            });
+
+            test("getRowByY", function () {
+                var el = getRowByY(1);
+                notEqual(el.length, 0);
+            });
+
+            test("getColumnByX", function () {
+                var el = getColumnByX(1);
+                notEqual(el.length, 0);
+            });
+
+            test("getGrid", function () {
+                var el = getGrid(1);
+                notEqual(el.length, 0);
+            });
+
+            test("hasDuplicates", function () {
+                ok(hasDuplicates([1, 2, 3, 4, 4]));
+            });
+
+            test("hasDuplicates.No", function () {
+                equal(hasDuplicates([1, 2, 3, 4]), false);
+            });
+
+            test("totalTooHigh", function () {
+                ok(totalTooHigh([1, 2, 3, 4, 5, 6, 7, 9, 9]));
+            });
+
+            test("totalTooHigh.No", function () {
+                equal(totalTooHigh([1, 2, 3, 4, 5, 6, 7, 8, 9]), false);
+            });
+
+            test("populateGridUsingDifficulty", function () {
+                equal($("[prepopulated='true']").length, difficulty);
+            });
+        });
+    </script>
+}

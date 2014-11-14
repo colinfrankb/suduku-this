@@ -1,0 +1,30 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Choose Difficulty</h2>
+
+<form method="get" action="/home/play">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="btn-group" data-toggle="buttons">
+                <label class="btn btn-primary">
+                    <input type="radio" name="difficulty" id="easy" value="36"> Easy
+                </label>
+                <label class="btn btn-primary">
+                    <input type="radio" name="difficulty" id="medium" value="30"> Medium
+                </label>
+                <label class="btn btn-primary">
+                    <input type="radio" name="difficulty" id="hard" value="24"> Hard
+                </label>
+            </div>
+            <div class="btn-group-gutter">
+                <button type="submit" class="btn btn-success">Play</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+
+
